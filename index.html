@@ -62,8 +62,6 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      overflow-y: auto;
-      height: 100%;
     }
     #sidebar h1 {
       color: #0ff;
@@ -153,8 +151,6 @@
       width: 320px;
       text-align: left;
       color: #0ff;
-      max-height: 70vh;
-      overflow-y: auto;
     }
     #characterModal h2 {
       text-align: center;
@@ -210,7 +206,6 @@
     <h1>Menu Principal</h1>
     <button id="startBtn">Start</button>
     <button id="charBtn">Characters</button>
-    <button id="commentBtn">Comentários</button>
     <button onclick="alert('Saindo do jogo...')">Exit</button>
   </div>
 
@@ -226,21 +221,19 @@
 
       <hr />
 
-      <div id="commentSection" style="display:none;">
-        <h2>Deixe seu comentário</h2>
-        <form action="https://formsubmit.co/noahrosa8046@gmail.com" method="POST" target="_blank">
-          <label for="name">Nome:</label>
-          <input type="text" id="name" name="name" placeholder="Seu nome" required />
+      <h2>Deixe seu comentário</h2>
+      <form action="https://formsubmit.co/noahrosa8046@gmail.com" method="POST" target="_blank">
+        <label for="name">Nome:</label>
+        <input type="text" id="name" name="name" placeholder="Seu nome" required />
 
-          <label for="message">Comentário / Sugestão:</label>
-          <textarea id="message" name="message" placeholder="Escreva aqui..." required rows="4"></textarea>
+        <label for="message">Comentário / Sugestão:</label>
+        <textarea id="message" name="message" placeholder="Escreva aqui..." required rows="4"></textarea>
 
-          <input type="hidden" name="_captcha" value="false" />
+        <input type="hidden" name="_captcha" value="false" />
 
-          <button type="submit">Enviar</button>
-        </form>
-        <button id="backCommentBtn">Voltar ao Menu</button>
-      </div>
+        <button type="submit">Enviar</button>
+      </form>
+      <button id="backBtn">Voltar ao Menu</button>
     </div>
 
     <div id="gameArea">
@@ -260,10 +253,7 @@
     const menu = document.getElementById("menu");
     const gameContainer = document.getElementById("gameContainer");
     const startBtn = document.getElementById("startBtn");
-    const charBtn = document.getElementById("charBtn");
-    const commentBtn = document.getElementById("commentBtn");
-    const backCommentBtn = document.getElementById("backCommentBtn");
-    const commentSection = document.getElementById("commentSection");
+    const backBtn = document.getElementById("backBtn");
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
@@ -275,6 +265,7 @@
     const playerNameEl = document.getElementById("playerName");
 
     // Modal de personagens
+    const charBtn = document.getElementById("charBtn");
     const characterModal = document.getElementById("characterModal");
     const characterList = document.getElementById("characterList");
     const closeModalBtn = document.getElementById("closeModalBtn");
@@ -323,6 +314,10 @@
     let launched = false;
     let aimStart = null;
     let aimEnd = null;
+
+    // Variáveis para controle do drag da raquete
+    let isDraggingPaddle = false;
+    let lastDragX = 0;
 
     // Personagens (bolinhas) e desbloqueios
     const characters = [
@@ -434,42 +429,29 @@
     }
 
     function update() {
-
-function update() {
-      // Movimento do paddle pela variável dx
-      paddle.x += paddle.dx;
-      // Limitar paddle dentro da tela
-      if (paddle.x < 0) paddle.x = 0;
-      if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
-
-      if (!launched) {
-        // Bolinha fica sobre o paddle se não lançado
-        ball.x = paddle.x + paddle.width / 2;
-        ball.y = paddle.y - ball.radius - 1;
-      } else {
-        // Movimento da bolinha
+      if (launched) {
         ball.x += ball.dx;
         ball.y += ball.dy;
 
-        // Colisão com paredes
-        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
-          ball.dx = -ball.dx;
-        }
-        if (ball.y - ball.radius < 0) {
-          ball.dy = -ball.dy;
-        }
+        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) ball.dx = -ball.dx;
+        if (ball.y - ball.radius < 0) ball.dy = -ball.dy;
+
+        // Limitar velocidade máxima para suavizar o movimento
+        const maxSpeed = 5;
+        if (ball.dx > maxSpeed) ball.dx = maxSpeed;
+        if (ball.dx < -maxSpeed) ball.dx = -maxSpeed;
+        if (ball.dy > maxSpeed) ball.dy = maxSpeed;
+        if (ball.dy < -maxSpeed) ball.dy = -maxSpeed;
 
         // Colisão com paddle
         if (
-          ball.y + ball.radius > paddle.y &&
           ball.x > paddle.x &&
           ball.x < paddle.x + paddle.width &&
-          ball.dy > 0
+          ball.y + ball.radius > paddle.y &&
+          ball.y - ball.radius < paddle.y + paddle.height
         ) {
           ball.dy = -ball.dy;
-          // Ajuste horizontal dependendo do ponto da colisão
-          let hitPos = ball.x - (paddle.x + paddle.width / 2);
-          ball.dx = hitPos * 0.2;
+          ball.y = paddle.y - ball.radius;
         }
 
         // Colisão com bricks
@@ -480,189 +462,75 @@ function update() {
               if (
                 ball.x > b.x &&
                 ball.x < b.x + brickWidth &&
-                ball.y - ball.radius < b.y + brickHeight &&
-                ball.y + ball.radius > b.y
+                ball.y > b.y &&
+                ball.y < b.y + brickHeight
               ) {
                 ball.dy = -ball.dy;
                 hitCount[c][r]++;
-                if (hitCount[c][r] > 2) {
+                score += 5;
+                scoreEl.textContent = score;
+
+                if (hitCount[c][r] >= 3) {
                   b.status = 0;
-                  score += 10;
-                  // Atualiza desbloqueio de personagens
+                  score += 15;
                 }
-                else {
-                  // Apenas muda cor pelo hitCount (2 hits para destruir)
+
+                if (score > highScore) {
+                  highScore = score;
+                  highScoreEl.textContent = highScore;
+                }
+
+                // Checar quantos blocos foram destruídos
+                let destroyed = 0;
+                for (let i = 0; i < brickColumnCount; i++) {
+                  for (let j = 0; j < brickRowCount; j++) {
+                    if (bricks[i][j].status === 0) destroyed++;
+                  }
+                }
+
+                // Avança fase
+                if (
+                  destroyed >= brickRowCount * brickColumnCount * 0.8 ||
+                  score >= level * 500
+                ) {
+                  level++;
+                  levelEl.textContent = level;
+                  resetBall();
+                  createBricks();
                 }
               }
             }
           }
         }
 
-        // Bolinha caiu abaixo do paddle
+        // Bola caiu no chão
         if (ball.y - ball.radius > canvas.height) {
           lives--;
           livesEl.textContent = lives;
           if (lives <= 0) {
-            alert("Game Over! Pontuação: " + score);
+            alert("Fim de Jogo!");
             resetGame();
-            return;
+            showMenu();
           } else {
-            resetBallPaddle();
+            resetBall();
           }
         }
+      } else {
+        // Bola presa na raquete
+        ball.x = paddle.x + paddle.width / 2;
+        ball.y = paddle.y - ball.radius - 1;
       }
 
-      scoreEl.textContent = score;
-      highScore = Math.max(highScore, score);
-      highScoreEl.textContent = highScore;
-      levelEl.textContent = level;
+      // Limites da raquete
+      if (paddle.x < 0) paddle.x = 0;
+      if (paddle.x + paddle.width > canvas.width)
+        paddle.x = canvas.width - paddle.width;
     }
 
-    // Reset bola e paddle para nova vida
-    function resetBallPaddle() {
-      launched = false;
+    function resetBall() {
       ball.dx = 0;
       ball.dy = 0;
-      ball.x = paddle.x + paddle.width / 2;
-      ball.y = paddle.y - ball.radius - 1;
+      launched = false;
       isAiming = false;
-      aimStart = null;
-      aimEnd = null;
-    }
-
-    // Reset do jogo inteiro
-    function resetGame() {
-      score = 0;
-      lives = 3;
-      level = 1;
-      createBricks();
-      resetBallPaddle();
-      livesEl.textContent = lives;
-      scoreEl.textContent = score;
-      levelEl.textContent = level;
-    }
-
-    // Controle do paddle pelo mouse
-    canvas.addEventListener("mousemove", e => {
-      const rect = canvas.getBoundingClientRect();
-      let mouseX = e.clientX - rect.left;
-      paddle.x = mouseX - paddle.width / 2;
-      if (paddle.x < 0) paddle.x = 0;
-      if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
-    });
-
-    // Controle do paddle pelo touch (deslizar)
-    canvas.addEventListener("touchmove", e => {
-      e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      let touchX = e.touches[0].clientX - rect.left;
-      paddle.x = touchX - paddle.width / 2;
-      if (paddle.x < 0) paddle.x = 0;
-      if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
-    }, { passive: false });
-
-    // Controle teclado para mira e lançamento
-    window.addEventListener("keydown", e => {
-      if (!launched) {
-        if (e.key === "ArrowLeft") {
-          if (!aimStart) {
-            aimStart = { x: ball.x, y: ball.y };
-            aimEnd = { x: ball.x - 50, y: ball.y - 50 };
-          } else {
-            aimEnd.x -= 10;
-            aimEnd.y += 5;
-          }
-          isAiming = true;
-        }
-        else if (e.key === "ArrowRight") {
-          if (!aimStart) {
-            aimStart = { x: ball.x, y: ball.y };
-            aimEnd = { x: ball.x + 50, y: ball.y - 50 };
-          } else {
-            aimEnd.x += 10;
-            aimEnd.y += 5;
-          }
-          isAiming = true;
-        }
-        else if (e.key === " ") {
-          if (isAiming && aimStart && aimEnd) {
-            // Calcula vetor de velocidade normalizado e escala
-            let dx = aimEnd.x - aimStart.x;
-            let dy = aimEnd.y - aimStart.y;
-            let length = Math.sqrt(dx * dx + dy * dy);
-            let speed = 6;
-            ball.dx = (dx / length) * speed;
-            ball.dy = (dy / length) * speed;
-            launched = true;
-            isAiming = false;
-            aimStart = null;
-            aimEnd = null;
-          }
-        }
-      }
-    });
-
-    // BOTÕES MENU
-    startBtn.addEventListener("click", () => {
-      menu.style.display = "none";
-      commentSection.style.display = "none";
-      gameContainer.style.display = "flex";
-      resetGame();
-      draw();
-    });
-
-    charBtn.addEventListener("click", () => {
-      menu.style.display = "none";
-      showCharacterModal();
-    });
-
-    commentBtn.addEventListener("click", () => {
-      menu.style.display = "none";
-      commentSection.style.display = "block";
-    });
-
-    backCommentBtn.addEventListener("click", () => {
-      commentSection.style.display = "none";
-      menu.style.display = "block";
-    });
-
-    // MODAL PERSONAGENS
-    function showCharacterModal() {
-      characterList.innerHTML = "";
-      characters.forEach((char, index) => {
-        const isUnlocked = char.unlock();
-        const div = document.createElement("div");
-        div.className = "ball-option";
-        if (!isUnlocked) div.classList.add("locked");
-        div.innerHTML = `
-          <span>${char.name}</span>
-          <button ${!isUnlocked ? "disabled" : ""} data-index="${index}">
-            ${selectedBall === char.name ? "Selecionado" : "Selecionar"}
-          </button>
-        `;
-        characterList.appendChild(div);
-      });
-      characterModal.style.display = "block";
-
-      // Eventos dos botões
-      characterList.querySelectorAll("button").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const idx = parseInt(btn.getAttribute("data-index"));
-          selectedBall = characters[idx].name;
-          characterModal.style.display = "none";
-          menu.style.display = "block";
-        });
-      });
-    }
-
-    closeModalBtn.addEventListener("click", () => {
-      characterModal.style.display = "none";
-      menu.style.display = "block";
-    });
-
-    // Inicializa blocos
-    createBricks();
-
-  </script>
-</body>
-</html>
+      ball.x = paddle.x + paddle.width / 2;
+      ball.y = paddle.y - ball.radius - 1
