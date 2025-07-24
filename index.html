@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Splash Crazy - Jogo da Bolinha Neon</title>
 <style>
+  /* Seu estilo original */
   * {
     box-sizing: border-box;
     margin: 0; padding: 0;
@@ -13,15 +14,16 @@
     font-family: Arial, sans-serif;
     background-color: #111;
     color: #0ff;
+    user-select: none;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100vh;
-    user-select: none;
   }
-  /* Menu Principal */
-  #menu {
+
+  /* Novo menu principal */
+  #mainMenu {
     background: #111;
     padding: 30px 40px;
     border-radius: 10px;
@@ -30,14 +32,13 @@
       0 0 40px #0ff,
       0 0 60px #0ff;
     text-align: center;
-    width: 200px;
+    width: 220px;
+    color: #0ff;
   }
-  #menu h1 {
+  #mainMenu h1 {
     margin-bottom: 20px;
-    font-weight: bold;
-    font-size: 1.5rem;
   }
-  #menu button {
+  #mainMenu button {
     background: #222;
     border: 1px solid #0ff;
     color: #0ff;
@@ -49,12 +50,12 @@
     cursor: pointer;
     transition: background 0.3s ease;
   }
-  #menu button:hover {
+  #mainMenu button:hover {
     background: #0ff;
     color: #000;
   }
 
-  /* Game Container */
+  /* Seu container de jogo original */
   #gameContainer {
     width: 100%;
     max-width: 600px;
@@ -74,7 +75,7 @@
     font-size: 18px;
   }
 
-  /* Modal para seleção de personagens */
+  /* Modal personagens */
   #characterModal {
     display: none;
     position: fixed;
@@ -114,7 +115,7 @@
     z-index: 999;
   }
 
-  /* Seção do formulário de comentário */
+  /* Formulário comentários */
   #commentSection {
     text-align: center;
     max-width: 400px;
@@ -154,7 +155,7 @@
   #commentSection button[type="submit"]:hover {
     background: #0cc;
   }
-  #commentSection #backBtn {
+  #commentSection #backBtnComment {
     margin-top: 15px;
     background: #222;
     border: 1px solid #0ff;
@@ -165,7 +166,7 @@
     cursor: pointer;
     transition: background 0.3s ease;
   }
-  #commentSection #backBtn:hover {
+  #commentSection #backBtnComment:hover {
     background: #0ff;
     color: #000;
   }
@@ -173,19 +174,17 @@
 </head>
 <body>
 
-<!-- MENU PRINCIPAL -->
-<div id="menu">
-  <h1>Menu Principal</h1>
-  <button id="startBtn">Start</button>
-  <button id="charBtn">Characters</button>
-  <button id="commentBtn">Comentários</button>
-  <button id="exitBtn">Exit</button>
-  <div id="scoreBoard">
-    <p>Melhor pontuação: <span id="highScore">0</span></p>
-  </div>
+<!-- NOVO MENU PRINCIPAL -->
+<div id="mainMenu">
+  <h1>Splash Crazy - Menu</h1>
+  <button id="btnStart">Iniciar Jogo</button>
+  <button id="btnCharacters">Personagens</button>
+  <button id="btnComments">Comentários</button>
+  <button id="btnExit">Sair</button>
+  <div id="mainHighScore" style="margin-top:10px;">Melhor pontuação: <span id="mainHighScoreVal">0</span></div>
 </div>
 
-<!-- JOGO -->
+<!-- CONTAINER DO JOGO (igual ao seu) -->
 <div id="gameContainer">
   <canvas id="gameCanvas" width="600" height="400"></canvas>
   <div id="scoreBoard">
@@ -220,128 +219,207 @@
 </div>
 
 <script>
-  // Variáveis do jogo (você já tem as suas)
-  let score = 0, lives = 3, level = 1, highScore = 0;
-
-  // Elementos
-  const menu = document.getElementById('menu');
+  // Referências aos elementos
+  const mainMenu = document.getElementById('mainMenu');
   const gameContainer = document.getElementById('gameContainer');
   const commentSection = document.getElementById('commentSection');
   const characterModal = document.getElementById('characterModal');
   const overlay = document.getElementById('overlay');
 
-  const startBtn = document.getElementById('startBtn');
-  const charBtn = document.getElementById('charBtn');
-  const commentBtn = document.getElementById('commentBtn');
-  const exitBtn = document.getElementById('exitBtn');
+  const btnStart = document.getElementById('btnStart');
+  const btnCharacters = document.getElementById('btnCharacters');
+  const btnComments = document.getElementById('btnComments');
+  const btnExit = document.getElementById('btnExit');
 
   const backBtnGame = document.getElementById('backBtnGame');
   const backBtnComment = document.getElementById('backBtnComment');
   const closeModalBtn = document.getElementById('closeModalBtn');
 
-  // Funções para mostrar/esconder telas
-  function showMenu() {
-    menu.style.display = 'block';
+  // Atualizar placar do menu principal com o highscore do jogo
+  const mainHighScoreVal = document.getElementById('mainHighScoreVal');
+  const highScoreEl = document.getElementById('highScore');
+  const scoreEl = document.getElementById('score');
+  const livesEl = document.getElementById('lives');
+  const levelEl = document.getElementById('level');
+
+  // Variáveis do jogo (copie suas variáveis daqui)
+  let score = 0;
+  let lives = 3;
+  let level = 1;
+  let highScore = 0;
+
+  // Funções para mostrar e esconder telas
+  function showMainMenu() {
+    mainMenu.style.display = 'block';
     gameContainer.style.display = 'none';
     commentSection.style.display = 'none';
     characterModal.style.display = 'none';
     overlay.style.display = 'none';
+    updateMainHighScore();
   }
-
   function showGame() {
-    menu.style.display = 'none';
+    mainMenu.style.display = 'none';
     gameContainer.style.display = 'block';
     commentSection.style.display = 'none';
     characterModal.style.display = 'none';
     overlay.style.display = 'none';
   }
-
   function showComments() {
-    menu.style.display = 'none';
+    mainMenu.style.display = 'none';
     gameContainer.style.display = 'none';
     commentSection.style.display = 'block';
     characterModal.style.display = 'none';
     overlay.style.display = 'none';
   }
+  function showCharacters() {
+    renderCharacterList();
+    characterModal.style.display = 'block';
+    overlay.style.display = 'block';
+    mainMenu.style.display = 'none';
+  }
 
-  // Botões menu
-  startBtn.addEventListener('click', () => {
-    // Aqui você pode colocar seu código original para iniciar o jogo:
-    // Exemplo:
-    if(score === 0 && lives === 3 && level === 1){
+  // Atualizar valor de highscore no menu principal
+  function updateMainHighScore() {
+    mainHighScoreVal.textContent = highScore;
+  }
+
+  // Botões do menu principal
+  btnStart.addEventListener('click', () => {
+    if(score === 0 && lives === 3 && level === 1) {
       createBricks();
       resetBallAndPaddle();
     }
     showGame();
   });
 
-  charBtn.addEventListener('click', () => {
-    renderCharacterList();
-    characterModal.style.display = 'block';
-    overlay.style.display = 'block';
-    menu.style.display = 'none';
+  btnCharacters.addEventListener('click', showCharacters);
+  btnComments.addEventListener('click', showComments);
+  btnExit.addEventListener('click', () => {
+    alert("Obrigado por jogar! Feche a aba para sair.");
   });
 
-  commentBtn.addEventListener('click', () => {
-    showComments();
-  });
-
-  exitBtn.addEventListener('click', () => {
-    alert("Saindo...");
-    // window.close() geralmente não funciona em navegadores por segurança
-  });
-
-  // Botões voltar
+  // Botão voltar do jogo
   backBtnGame.addEventListener('click', () => {
     resetGame();
-    showMenu();
+    showMainMenu();
   });
 
+  // Botão voltar do comentário
   backBtnComment.addEventListener('click', () => {
-    showMenu();
+    showMainMenu();
   });
 
+  // Fechar modal personagens
   closeModalBtn.addEventListener('click', () => {
     characterModal.style.display = 'none';
     overlay.style.display = 'none';
-    menu.style.display = 'block';
+    mainMenu.style.display = 'block';
   });
 
   overlay.addEventListener('click', () => {
     characterModal.style.display = 'none';
     overlay.style.display = 'none';
-    menu.style.display = 'block';
+    mainMenu.style.display = 'block';
   });
 
-  // ---------------------------
-  // Seu código de jogo aqui: 
-  // (criação dos bricks, paddle, bola, lógica, draw, update, etc.)
-  // ---------------------------
+  // -- Seu código original de jogo -- (copie ele inteiro aqui)
+  // Variáveis de bricks, paddle, bola etc (igual seu código)
 
-  // Exemplo simples para criar bricks, resetar bola etc (copie seu código original aqui)
-  function createBricks() {
-    // Sua lógica original aqui
-  }
-  function resetBallAndPaddle() {
-    // Sua lógica original aqui
-  }
-  function resetGame() {
-    score = 0; lives = 3; level = 1;
-    createBricks();
-    resetBallAndPaddle();
-  }
-  function renderCharacterList() {
-    // Sua lógica original aqui para listar personagens no modal
-  }
+  // Paddle
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
 
-  // Inicialização
-  createBricks();
-  // drawHUD();
-  // draw();
+  const paddle = {
+    width: 100,
+    height: 15,
+    x: canvas.width / 2 - 50,
+    y: canvas.height - 40,
+  };
 
-  showMenu();
+  const ball = {
+    x: canvas.width / 2,
+    y: canvas.height - 30,
+    radius: 10,
+    dx: 0,
+    dy: 0,
+  };
+
+  let bricks = [];
+  const brickRowCount = 5;
+  const brickColumnCount = 8;
+  const brickWidth = 65;
+  const brickHeight = 20;
+  const brickPadding = 8;
+  const brickOffsetTop = 30;
+  const brickOffsetLeft = 20;
+
+  let hitCount = [];
+
+  let isAiming = false;
+  let launched = false;
+  let aimStart = { x: 0, y: 0 };
+  let aimEnd = { x: 0, y: 0 };
+
+  let mouseDrag = false;
+  let lastMouseX = 0;
+  let touchDrag = false;
+  let lastTouchX = 0;
+
+  const characters = [
+    {
+      name: "Bolinha Neon Azul",
+      unlock: () => true,
+      color: "#0ff",
+    },
+    {
+      name: "Bolinha Cristal",
+      unlock: () => score >= 500,
+      color: "#aee",
+    },
+    {
+      name: "Bolinha Ouro",
+      unlock: () => level >= 3,
+      color: "#ffcc00",
+    },
+    {
+      name: "Bolinha Brilhando",
+      unlock: () => lives === 3,
+      color: "#fff",
+    },
+    {
+      name: "Bolinha Piscando",
+      unlock: () => score >= 1000 && level >= 5,
+      color: "#f0f",
+    },
+  ];
+
+  let selectedBall = characters[0].name;
+
+  // Suas funções originais (copie todas aqui, não vou repetir para não poluir)
+  // createBricks, drawBricks, drawPaddle, drawBall, drawAim, update, checkLevelComplete,
+  // resetBallAndPaddle, resetGame, renderCharacterList, etc.
+
+  // Controles de mouse e touch para paddle e mira (copie seu código original aqui)
+
+  // Loop do jogo (draw)
+
+  // Para não ficar gigante aqui, apenas vou colocar abaixo o link para que cole seu código original na posição correta
+
+  /*
+
+  COLE TODO O SEU CÓDIGO ORIGINAL AQUI, A PARTIR DO
+  createBricks()
+  resetBallAndPaddle()
+  drawHUD()
+  draw()
+  E TODO O RESTANTE DAS FUNÇÕES E EVENTOS
+
+  */
+
+  // Inicialização mínima para o menu:
+  updateMainHighScore();
+  showMainMenu();
 
 </script>
-
 </body>
 </html>
