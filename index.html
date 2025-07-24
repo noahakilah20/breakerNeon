@@ -539,3 +539,75 @@
 
       const span = document.createElement("span");
       span.text
+
+span.textContent = char.name;
+
+      const colorBox = document.createElement("div");
+      colorBox.style.width = "20px";
+      colorBox.style.height = "20px";
+      colorBox.style.backgroundColor = char.color;
+      colorBox.style.borderRadius = "50%";
+      colorBox.style.border = "1px solid #0ff";
+      colorBox.style.marginRight = "10px";
+
+      div.prepend(colorBox);
+
+      if (unlocked) {
+        const selectBtn = document.createElement("button");
+        selectBtn.textContent = selectedBall === char.name ? "Selecionado" : "Selecionar";
+        selectBtn.disabled = selectedBall === char.name;
+        selectBtn.addEventListener("click", () => {
+          selectedBall = char.name;
+          renderCharacterList();
+        });
+        div.appendChild(selectBtn);
+      } else {
+        const lockedLabel = document.createElement("span");
+        lockedLabel.textContent = "Bloqueado";
+        lockedLabel.style.fontStyle = "italic";
+        div.appendChild(lockedLabel);
+      }
+
+      characterList.appendChild(div);
+    });
+  }
+
+  // Eventos dos botões do menu e modal
+  startBtn.addEventListener("click", () => {
+    if (score === 0 && lives === 3 && level === 1) {
+      createBricks();
+      resetBallAndPaddle();
+    }
+    showMenu(false);
+  });
+
+  backBtn.addEventListener("click", () => {
+    showMenu(true);
+    resetGame();
+  });
+
+  charBtn.addEventListener("click", () => {
+    renderCharacterList();
+    characterModal.style.display = "block";
+    overlay.style.display = "block";
+  });
+
+  closeModalBtn.addEventListener("click", () => {
+    characterModal.style.display = "none";
+    overlay.style.display = "none";
+  });
+
+  overlay.addEventListener("click", () => {
+    characterModal.style.display = "none";
+    overlay.style.display = "none";
+  });
+
+  // Inicializa o jogo e loop
+  createBricks();
+  drawHUD();
+  draw();
+
+</script>
+
+</body>
+</html>
