@@ -290,44 +290,220 @@
 
     // Bolinha
     const INITIAL_BALL_DX = 2;
-const INITIAL_BALL_DY = -2;
+    const INITIAL_BALL_DY = -2;
 
-let ball = {
-  x: canvas.width / 2,
-  y: canvas.height - 30,
-  dx: INITIAL_BALL_DX,
-  dy: INITIAL_BALL_DY,
-  radius: 10,
-  speed: 2
-};
+    let ball = {
+      x: canvas.width / 2,
+      y: canvas.height - 30,
+      dx: INITIAL_BALL_DX,
+      dy: INITIAL_BALL_DY,
+      radius: 10,
+      speed: 2
+    };
 
-function resetBall() {
-  ball.x = canvas.width / 2;
-  ball.y = canvas.height - 30;
-  ball.dx = INITIAL_BALL_DX; // ✅ Corrigido: volta à velocidade original
-  ball.dy = INITIAL_BALL_DY;
-}
+    // Controle de estado da bola
+    let launched = false;
+    let aimStart = null;
+    let aimEnd = null;
+    let isAiming = false;
 
-function resetGame() {
-  resetBall(); // ✅ Correto: usa função que reseta tudo
-  bricks = [];
-  score = 0;
-  lives = 3;
-  level = 1;
-  createBricks();
-}
+    // Bricks (tijolos)
+    let bricks = [];
 
+    // Personagens
+    const characters = [
+      { name: "Bolinha Neon", unlock: () => true },
+      { name: "Bolinha Cristal", unlock: () => score >= 50 },
+      { name: "Bolinha Ouro", unlock: () => score >= 100 }
+    ];
+    let selectedBall = characters[0].name;
 
-      createBricks();
-      resetBall();
+    // Função para criar tijolos
+    function createBricks() {
+      bricks = [];
+      const rows = 5;
+      const cols = 10;
+      const brickWidth = 70;
+      const brickHeight = 20;
+      const padding = 10;
+      const offsetTop = 30;
+      const offsetLeft = 35;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          bricks.push({
+            x: c * (brickWidth + padding) + offsetLeft,
+            y: r * (brickHeight + padding) + offsetTop,
+            width: brickWidth,
+            height: brickHeight,
+            destroyed: false
+          });
+        }
+      }
     }
 
-    // Eventos de input mouse e touch
+    // Funções de desenho
+    function drawBricks() {
+      bricks.forEach(brick => {
+        if (!brick.destroyed) {
+          ctx.fillStyle = 'cyan';
+          ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+          ctx.strokeStyle = '#0ff';
+          ctx.strokeRect(brick.x, brick.y, brick.width, brick.height);
+        }
+      });
+    }
 
-    // Variáveis para controle do drag da raquete
+    function drawPaddle() {
+      ctx.fillStyle = 'cyan';
+      ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+    }
+
+    function drawBall() {
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.fillStyle = 'cyan';
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    // Reseta a bola para posição inicial e velocidade padrão
+    function resetBall() {
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height - 30;
+      ball.dx = INITIAL_BALL_DX;
+      ball.dy = INITIAL_BALL_DY;
+    }
+
+    // Reseta o jogo (pontuação, vidas, fase, bricks, bola)
+    function resetGame() {
+      resetBall();
+      bricks = [];
+      score = 0;
+      lives = 3;
+      level = 1;
+      createBricks();
+      updateHUD();
+      launched = false;
+    }
+
+    // Atualiza HUD na tela
+    function updateHUD() {
+      scoreEl.textContent = score;
+      livesEl.textContent = lives;
+      levelEl.textContent = level;
+      if (score > highScore) {
+        highScore = score;
+        highScoreEl.textContent = highScore;
+      }
+    }
+
+    // Controle do paddle - limite dentro do canvas
+    function clampPaddle() {
+      if (paddle.x < 0) paddle.x = 0;
+      if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
+    }
+
+    // Atualiza lógica do jogo
+    function update() {
+      if (launched) {
+        ball.x += ball.dx;
+        ball.y += ball.dy;
+
+        // Colisão com paredes laterais
+        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+          ball.dx = -ball.dx;
+        }
+
+        // Colisão com teto
+        if (ball.y - ball.radius < 0) {
+          ball.dy = -ball.dy;
+        }
+
+        // Colisão com paddle
+        if (
+          ball.y + ball.radius > paddle.y &&
+          ball.x > paddle.x &&
+          ball.x < paddle.x + paddle.width
+        ) {
+          ball.dy = -ball.dy;
+          let hitPos = ball.x - (paddle.x + paddle.width / 2);
+          ball.dx = hitPos * 0.15;
+        }
+
+        // Bola caiu - perde vida
+        if (ball.y + ball.radius > canvas.height) {
+          lives--;
+          if (lives <= 0) {
+            alert("Game Over!");
+            resetGame();
+            showMenu();
+            return; // Para o jogo atual
+          } else {
+            resetBall();
+            launched = false;
+          }
+          updateHUD();
+        }
+
+        // Colisão com tijolos
+        bricks.forEach(brick => {
+          if (!brick.destroyed) {
+            if (
+              ball.x > brick.x &&
+              ball.x < brick.x + brick.width &&
+              ball.y - ball.radius < brick.y + brick.height &&
+              ball.y + ball.radius > brick.y
+            ) {
+              ball.dy = -ball.dy;
+              brick.destroyed = true;
+              score += 10;
+              updateHUD();
+
+              // Próxima fase se todos tijolos destruídos
+              if (bricks.every(b => b.destroyed)) {
+                level++;
+                alert("Parabéns! Próxima fase: " + level);
+                resetGame();
+                launched = false;
+              }
+            }
+          }
+        });
+      } else {
+        // Bola acompanha paddle antes de lançar
+        ball.x = paddle.x + paddle.width / 2;
+        ball.y = paddle.y - ball.radius;
+      }
+
+      clampPaddle();
+    }
+
+    // Desenha tudo no canvas
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawBricks();
+      drawPaddle();
+      drawBall();
+
+      // Linha da mira ao lançar bola
+      if (isAiming && !launched) {
+        ctx.beginPath();
+        ctx.strokeStyle = "cyan";
+        ctx.lineWidth = 2;
+        ctx.moveTo(aimStart.x, aimStart.y);
+        ctx.lineTo(aimEnd.x, aimEnd.y);
+        ctx.stroke();
+      }
+
+      update();
+      requestAnimationFrame(draw);
+    }
+
+    // Controle do mouse e toque para paddle e lançamento bola
+
     let mouseDrag = false;
     let lastMouseX = 0;
-
     let touchDrag = false;
     let lastTouchX = 0;
 
@@ -338,14 +514,12 @@ function resetGame() {
       const y = e.clientY - rect.top;
 
       if (launched) {
-        // Bola lançada: inicia drag para mover raquete, só na metade inferior
         if (y > canvas.height / 2) {
           mouseDrag = true;
           lastMouseX = x;
           e.preventDefault();
         }
       } else {
-        // Bola não lançada: inicia mira para lançar
         aimStart = { x: x, y: y };
         aimEnd = { x: x, y: y };
         isAiming = true;
@@ -358,7 +532,6 @@ function resetGame() {
       const y = e.clientY - rect.top;
 
       if (mouseDrag && launched) {
-        // Mover a raquete com o mouse
         let deltaX = x - lastMouseX;
         paddle.x += deltaX;
         lastMouseX = x;
@@ -370,7 +543,6 @@ function resetGame() {
 
     canvas.addEventListener("mouseup", (e) => {
       if (isAiming) {
-        // Calcula vetor direção da mira e lança a bola
         const dx = aimStart.x - aimEnd.x;
         const dy = aimStart.y - aimEnd.y;
         const length = Math.sqrt(dx * dx + dy * dy);
@@ -437,13 +609,13 @@ function resetGame() {
       touchDrag = false;
     });
 
-    // Função para mostrar o menu e esconder o jogo
+    // Mostrar menu, esconder jogo
     function showMenu() {
       gameContainer.style.display = "none";
       menu.style.display = "block";
     }
 
-    // Função para iniciar o jogo
+    // Iniciar jogo
     function startGame() {
       menu.style.display = "none";
       gameContainer.style.display = "flex";
@@ -497,10 +669,9 @@ function resetGame() {
       });
     }
 
-    // Inicializa os bricks e mostra menu
+    // Inicialização
     createBricks();
     showMenu();
   </script>
 </body>
 </html>
-
