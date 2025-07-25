@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>Splash Crazy - Jogo da Bolinha Neon</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -15,58 +14,213 @@
       align-items: center;
       height: 100vh;
     }
-    #container {
+    #menu, #gameContainer {
+      background: #111;
+      border: 2px solid cyan;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 0 20px cyan;
       text-align: center;
-      max-width: 800px;
-      width: 100%;
     }
-    #gameCanvas {
+    #menu {
+      width: 320px;
+    }
+    #gameContainer {
       display: none;
-      background: black;
-      border: 4px solid #0ff;
-      border-radius: 12px;
-    }
-    #menu, #characterMenu {
-      margin-top: 20px;
+      width: 1080px;
+      height: 680px;
+      display: flex;
+      gap: 20px;
     }
     button {
-      background-color: #0ff;
-      color: #111;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      margin: 5px;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-    input, textarea {
-      width: 90%;
+      display: block;
+      width: 180px;
+      padding: 10px;
       margin: 10px auto;
-      padding: 8px;
-      font-size: 14px;
-      border-radius: 8px;
-      border: none;
+      font-size: 16px;
+      border: 2px solid cyan;
+      border-radius: 10px;
+      background-color: black;
+      color: cyan;
+      cursor: pointer;
+      transition: 0.3s;
     }
-    textarea {
-      resize: none;
+    button:hover {
+      background-color: cyan;
+      color: black;
+      font-weight: bold;
+    }
+    #sidebar {
+      margin: 0;
+      padding: 20px;
+      color: #0ff;
+      width: 240px;
+      font-size: 14px;
+      background-color: #111;
+      border-radius: 12px;
+      box-shadow: 0 0 15px cyan;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    #sidebar h1 {
+      color: #0ff;
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    #sidebar h2 {
+      margin-top: 20px;
+      font-size: 16px;
+    }
+    #sidebar label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 4px;
+    }
+    #sidebar input[type="text"], #sidebar textarea {
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 6px;
+      border: 1px solid #0ff;
+      border-radius: 4px;
+      background-color: #111;
+      color: #0ff;
+      resize: vertical;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    #sidebar input[type="text"]::placeholder,
+    #sidebar textarea::placeholder {
+      color: #0aa;
+    }
+    #sidebar button {
+      background-color: #0ff;
+      border: none;
+      padding: 8px 16px;
+      cursor: pointer;
+      color: #111;
+      font-weight: bold;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: background-color 0.3s ease;
+    }
+    #sidebar button:hover {
+      background-color: #0cc;
+    }
+    #sidebar hr {
+      border-color: #0ff;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    #gameArea {
+      border: 2px solid cyan;
+      background-color: #222;
+      border-radius: 12px;
+      position: relative;
+      box-shadow: 0 0 20px cyan;
+      flex-grow: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    canvas {
+      display: block;
+      background-color: #000;
+      border-radius: 10px;
+      touch-action: none; /* importante para touch */
+    }
+    #backBtn {
+      margin-top: 15px;
+      width: auto;
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    /* Modal de seleção de personagem */
+    #characterModal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #000;
+      border: 2px solid cyan;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 20px cyan;
+      z-index: 1000;
+      width: 320px;
+      text-align: left;
+      color: #0ff;
+    }
+    #characterModal h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    #closeModalBtn {
+      background-color: red;
+      color: white;
+      width: auto;
+      padding: 4px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      display: block;
+      margin: 10px auto 0;
+    }
+    .ball-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px;
+      margin: 4px 0;
+      border: 1px solid #0ff;
+      border-radius: 8px;
+    }
+    .locked {
+      opacity: 0.4;
+    }
+    .ball-option button {
+      background-color: black;
+      border: 1px solid cyan;
+      border-radius: 6px;
+      color: cyan;
+      cursor: pointer;
+      padding: 4px 12px;
+      transition: 0.3s;
+    }
+    .ball-option button:hover:not(:disabled) {
+      background-color: cyan;
+      color: black;
+      font-weight: bold;
+    }
+    .ball-option button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
     }
   </style>
 </head>
 <body>
-  <div id="container">
-    <div id="menu">
-      <h1>Splash Crazy - Jogo da Bolinha Neon</h1>
-      <p>Selecione seu personagem:</p>
-      <div id="characterMenu">
-        <button onclick="selectCharacter('normal')">Bolinha Normal</button>
-        <button onclick="selectCharacter('cristal')">Bolinha de Cristal</button>
-        <button onclick="selectCharacter('ouro')">Bolinha de Ouro</button>
-        <button onclick="selectCharacter('brilhando')">Bolinha Brilhando</button>
-        <button onclick="selectCharacter('piscando')">Bolinha Piscando</button>
-      </div>
-      <button onclick="startGame()">Iniciar Jogo</button>
+  <!-- MENU INICIAL -->
+  <div id="menu">
+    <h1>Menu Principal</h1>
+    <button id="startBtn">Start</button>
+    <button id="charBtn">Characters</button>
+    <button onclick="alert('Saindo do jogo...')">Exit</button>
+  </div>
+
+  <!-- CONTAINER DO JOGO + SIDEBAR -->
+  <div id="gameContainer">
+    <div id="sidebar">
+      <h1>Jogo da Bolinha Neon</h1>
+      <p><strong>Jogador:</strong> <span id="playerName">---</span></p>
+      <p><strong>Pontuação:</strong> <span id="score">0</span></p>
+      <p><strong>Recorde:</strong> <span id="highScore">0</span></p>
+      <p><strong>Vidas:</strong> <span id="lives">3</span></p>
+      <p><strong>Fase:</strong> <span id="level">1</span></p>
 
       <hr />
+
       <h2>Deixe seu comentário</h2>
       <form action="https://formsubmit.co/noahrosa8046@gmail.com" method="POST" target="_blank">
         <label for="name">Nome:</label>
@@ -76,9 +230,10 @@
         <textarea id="message" name="message" placeholder="Escreva aqui..." required rows="4"></textarea>
 
         <input type="hidden" name="_captcha" value="false" />
+
         <button type="submit">Enviar</button>
       </form>
-      <button id="backBtn" onclick="backToMenu()" style="display: none;">Voltar ao Menu</button>
+      <button id="backBtn">Voltar ao Menu</button>
     </div>
 
     <div id="gameArea">
@@ -86,257 +241,490 @@
     </div>
   </div>
 
-  <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-    const menu = document.getElementById("menu");
-    const backBtn = document.getElementById("backBtn");
+  <!-- MODAL DE SELEÇÃO DE PERSONAGEM -->
+  <div id="characterModal">
+    <h2>Escolha sua Bolinha</h2>
+    <div id="characterList"></div>
+    <button id="closeModalBtn">Fechar</button>
+  </div>
 
-    let animationFrameId;
-    let ballSpeedX = 4;
-    let ballSpeedY = -4;
-    let gameRunning = false;
+<script>
+  // Elementos principais
+  const menu = document.getElementById("menu");
+  const gameContainer = document.getElementById("gameContainer");
+  const startBtn = document.getElementById("startBtn");
+  const backBtn = document.getElementById("backBtn");
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
 
-    function cancelGameLoop() {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
+  // HUD
+  const scoreEl = document.getElementById("score");
+  const highScoreEl = document.getElementById("highScore");
+  const livesEl = document.getElementById("lives");
+  const levelEl = document.getElementById("level");
+  const playerNameEl = document.getElementById("playerName");
+
+  // Modal de personagens
+  const charBtn = document.getElementById("charBtn");
+  const characterModal = document.getElementById("characterModal");
+  const characterList = document.getElementById("characterList");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+
+  // Variáveis do jogador
+  let playerName = prompt("Digite seu nome:");
+  playerNameEl.textContent = playerName || "Desconhecido";
+
+  let score = 0;
+  let highScore = 0;
+  let lives = 3;
+  let level = 1;
+
+  // Posição e tamanho da raquete (paddle)
+  let paddle = {
+    x: canvas.width / 2 - 40,
+    y: canvas.height - 20,
+    width: 80,
+    height: 10,
+  };
+
+  // Bolinha
+  let ball = {
+    x: canvas.width / 2,
+    y: canvas.height - 30,
+    radius: 8,
+    dx: 0,
+    dy: 0,
+  };
+
+  // Tabela de blocos (bricks)
+  const brickRowCount = 5;
+  const brickColumnCount = 8;
+  const brickWidth = 50;
+  const brickHeight = 15;
+  const brickPadding = 8;
+  const brickOffsetTop = 40;
+  const brickOffsetLeft = 20;
+
+  let bricks = [];
+  let hitCount = [];
+
+  // Controle do lançamento da bola
+  let isAiming = false;
+  let launched = false;
+  let aimStart = null;
+  let aimEnd = null;
+
+  // Variáveis para controle do drag da raquete
+  let mouseDrag = false;
+  let lastMouseX = 0;
+  let touchDrag = false;
+  let lastTouchX = 0;
+
+  // Personagens (bolinhas) e desbloqueios
+  const characters = [
+    { name: "Bola Clássica", unlock: () => true },
+    { name: "Bola de Cristal", unlock: () => level >= 3 },
+    { name: "Bola de Ouro", unlock: () => score >= 1000 },
+    { name: "Bola Brilhando", unlock: () => level >= 5 },
+    { name: "Bola Piscando", unlock: () => score >= 2000 },
+  ];
+  let selectedBall = "Bola Clássica";
+
+  // Função para criar os bricks e zerar os contadores
+  function createBricks() {
+    bricks = [];
+    hitCount = [];
+    for (let c = 0; c < brickColumnCount; c++) {
+      bricks[c] = [];
+      hitCount[c] = [];
+      for (let r = 0; r < brickRowCount; r++) {
+        bricks[c][r] = { x: 0, y: 0, status: 1 };
+        hitCount[c][r] = 0;
       }
     }
+  }
 
-    function resetBall() {
-      ballX = canvas.width / 2;
-      ballY = canvas.height - 30;
-      ballSpeedX = 4;
-      ballSpeedY = -4;
-    }
+  // Desenho dos bricks
+  function drawBricks() {
+    for (let c = 0; c < brickColumnCount; c++) {
+      for (let r = 0; r < brickRowCount; r++) {
+        if (bricks[c][r].status > 0) {
+          let brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
+          let brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
+          bricks[c][r].x = brickX;
+          bricks[c][r].y = brickY;
 
-    function backToMenu() {
-      cancelGameLoop();
-      gameRunning = false;
-      menu.style.display = "block";
-      canvas.style.display = "none";
-      backBtn.style.display = "none";
-    }
-
-    function startGame() {
-      resetGame();
-      menu.style.display = "none";
-      canvas.style.display = "block";
-      backBtn.style.display = "inline-block";
-      gameRunning = true;
-      gameLoop(); // chamada única!
-    }
-
-    function resetGame() {
-      // Reinicia tudo
-      resetBall();
-      // Reinicie outras variáveis como score, vidas etc, se necessário
-    }
-
-let paddleHeight = 10;
-    let paddleWidth = 120;
-    let paddleX = (canvas.width - paddleWidth) / 2;
-
-    let rightPressed = false;
-    let leftPressed = false;
-    let touchX = null;
-
-    let ballRadius = 10;
-    let ballX = canvas.width / 2;
-    let ballY = canvas.height - 30;
-
-    let character = 'normal';
-
-    let bricks = [];
-    let brickRowCount = 3;
-    let brickColumnCount = 5;
-    let brickWidth = 75;
-    let brickHeight = 20;
-    let brickPadding = 10;
-    let brickOffsetTop = 30;
-    let brickOffsetLeft = 30;
-
-    function selectCharacter(type) {
-      character = type;
-    }
-
-    function createBricks() {
-      bricks = [];
-      for (let c = 0; c < brickColumnCount; c++) {
-        bricks[c] = [];
-        for (let r = 0; r < brickRowCount; r++) {
-          bricks[c][r] = { x: 0, y: 0, status: 1 };
+          ctx.fillStyle =
+            hitCount[c][r] === 0
+              ? "#0f0"
+              : hitCount[c][r] === 1
+              ? "#ff0"
+              : "#f00";
+          ctx.fillRect(brickX, brickY, brickWidth, brickHeight);
         }
       }
     }
+  }
 
-    createBricks();
+  // Desenha a bola conforme personagem selecionado
+  function drawBall() {
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    switch (selectedBall) {
+      case "Bola Clássica":
+        ctx.fillStyle = "cyan";
+        break;
+      case "Bola de Cristal":
+        ctx.fillStyle = "rgba(0, 255, 255, 0.3)";
+        break;
+      case "Bola de Ouro":
+        ctx.fillStyle = "gold";
+        break;
+      case "Bola Brilhando":
+        ctx.fillStyle = "lime";
+        break;
+      case "Bola Piscando":
+        ctx.fillStyle = Math.random() > 0.5 ? "magenta" : "cyan";
+        break;
+      default:
+        ctx.fillStyle = "cyan";
+    }
+    ctx.fill();
+    ctx.closePath();
+  }
 
-    function drawBall() {
+  // Desenha a raquete (paddle)
+  function drawPaddle() {
+    ctx.fillStyle = "#0ff";
+    ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+  }
+
+  // Desenha seta de mira
+  function drawAimArrow() {
+    if (isAiming && aimStart && aimEnd) {
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
-      switch (character) {
-        case 'cristal':
-          ctx.fillStyle = "rgba(173, 216, 230, 0.8)";
-          break;
-        case 'ouro':
-          ctx.fillStyle = "gold";
-          break;
-        case 'brilhando':
-          ctx.fillStyle = "#0ff";
-          ctx.shadowBlur = 20;
-          ctx.shadowColor = "#0ff";
-          break;
-        case 'piscando':
-          ctx.fillStyle = (Date.now() % 500 < 250) ? "#0ff" : "#fff";
-          break;
-        default:
-          ctx.fillStyle = "#0ff";
-          break;
-      }
-      ctx.fill();
-      ctx.closePath();
-      ctx.shadowBlur = 0;
-    }
+      ctx.moveTo(aimStart.x, aimStart.y);
+      ctx.lineTo(aimEnd.x, aimEnd.y);
+      ctx.stroke();
 
-    function drawPaddle() {
+      const angle = Math.atan2(aimEnd.y - aimStart.y, aimEnd.x - aimStart.x);
+      const arrowLength = 15;
       ctx.beginPath();
-      ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
-      ctx.fillStyle = "#0ff";
+      ctx.moveTo(aimEnd.x, aimEnd.y);
+      ctx.lineTo(
+        aimEnd.x - arrowLength * Math.cos(angle - Math.PI / 6),
+        aimEnd.y - arrowLength * Math.sin(angle - Math.PI / 6)
+      );
+      ctx.lineTo(
+        aimEnd.x - arrowLength * Math.cos(angle + Math.PI / 6),
+        aimEnd.y - arrowLength * Math.sin(angle + Math.PI / 6)
+      );
+      ctx.lineTo(aimEnd.x, aimEnd.y);
+      ctx.fillStyle = "#fff";
       ctx.fill();
-      ctx.closePath();
     }
+  }
 
-    function drawBricks() {
-      for (let c = 0; c < brickColumnCount; c++) {
-        for (let r = 0; r < brickRowCount; r++) {
-          if (bricks[c][r].status == 1) {
-            let brickX = (c * (brickWidth + brickPadding)) + brickOffsetLeft;
-            let brickY = (r * (brickHeight + brickPadding)) + brickOffsetTop;
-            bricks[c][r].x = brickX;
-            bricks[c][r].y = brickY;
-            ctx.beginPath();
-            ctx.rect(brickX, brickY, brickWidth, brickHeight);
-            ctx.fillStyle = "#0ff";
-            ctx.fill();
-            ctx.closePath();
-          }
-        }
+  // Loop principal de desenho
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBricks();
+    drawBall();
+    drawPaddle();
+    drawAimArrow();
+    update();
+    requestAnimationFrame(draw);
+  }
+
+  // Atualiza o estado do jogo
+  function update() {
+    if (launched) {
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+
+      // Colisão com paredes laterais
+      if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0)
+        ball.dx = -ball.dx;
+
+      // Colisão com teto
+      if (ball.y - ball.radius < 0) ball.dy = -ball.dy;
+
+      // Colisão com paddle
+      if (
+        ball.x > paddle.x &&
+        ball.x < paddle.x + paddle.width &&
+        ball.y + ball.radius > paddle.y &&
+        ball.y - ball.radius < paddle.y + paddle.height
+      ) {
+        ball.dy = -ball.dy;
+        ball.y = paddle.y - ball.radius;
       }
-    }
 
-    function collisionDetection() {
+      // Colisão com bricks
       for (let c = 0; c < brickColumnCount; c++) {
         for (let r = 0; r < brickRowCount; r++) {
           let b = bricks[c][r];
-          if (b.status == 1) {
+          if (b.status > 0) {
             if (
-              ballX > b.x &&
-              ballX < b.x + brickWidth &&
-              ballY > b.y &&
-              ballY < b.y + brickHeight
+              ball.x > b.x &&
+              ball.x < b.x + brickWidth &&
+              ball.y > b.y &&
+              ball.y < b.y + brickHeight
             ) {
-              ballSpeedY = -ballSpeedY;
-              b.status = 0;
+              ball.dy = -ball.dy;
+              hitCount[c][r]++;
+              score += 5;
+              scoreEl.textContent = score;
+
+              if (hitCount[c][r] >= 3) {
+                b.status = 0;
+                score += 15;
+              }
+
+              if (score > highScore) {
+                highScore = score;
+                highScoreEl.textContent = highScore;
+              }
+
+              // Verifica quantos blocos destruídos
+              let destroyed = 0;
+              for (let i = 0; i < brickColumnCount; i++) {
+                for (let j = 0; j < brickRowCount; j++) {
+                  if (bricks[i][j].status === 0) destroyed++;
+                }
+              }
+
+              // Avança de fase
+              if (
+                destroyed >= brickRowCount * brickColumnCount * 0.8 ||
+                score >= level * 500
+              ) {
+                level++;
+                levelEl.textContent = level;
+                resetBall();
+                createBricks();
+              }
             }
           }
         }
       }
-    }
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawBricks();
-      drawBall();
-      drawPaddle();
-      collisionDetection();
-
-      if (
-        ballX + ballSpeedX > canvas.width - ballRadius ||
-        ballX + ballSpeedX < ballRadius
-      ) {
-        ballSpeedX = -ballSpeedX;
-      }
-
-      if (ballY + ballSpeedY < ballRadius) {
-        ballSpeedY = -ballSpeedY;
-      } else if (ballY + ballSpeedY > canvas.height - ballRadius) {
-        if (ballX > paddleX && ballX < paddleX + paddleWidth) {
-          ballSpeedY = -ballSpeedY;
+      // Bola caiu no chão
+      if (ball.y - ball.radius > canvas.height) {
+        lives--;
+        livesEl.textContent = lives;
+        if (lives <= 0) {
+          alert("Fim de Jogo!");
+          resetGame();
+          showMenu();
         } else {
-          cancelGameLoop();
-          alert("Fim de jogo!");
-          document.location.reload();
+          resetBall();
         }
       }
-
-      ballX += ballSpeedX;
-      ballY += ballSpeedY;
-
-      if (rightPressed && paddleX < canvas.width - paddleWidth) {
-        paddleX += 7;
-      } else if (leftPressed && paddleX > 0) {
-        paddleX -= 7;
-      }
-
-      animationFrameId = requestAnimationFrame(gameLoop);
+    } else {
+      // Bola presa na raquete
+      ball.x = paddle.x + paddle.width / 2;
+      ball.y = paddle.y - ball.radius - 1;
     }
 
-    function gameLoop() {
-      if (gameRunning) {
-        draw();
+    // Limites da raquete
+    if (paddle.x < 0) paddle.x = 0;
+    if (paddle.x + paddle.width > canvas.width)
+      paddle.x = canvas.width - paddle.width;
+  }
+
+  // Reseta a bola com velocidade padrão toda vez que é reiniciada
+  function resetBall() {
+    ball.dx = 0;
+    ball.dy = 0;
+    launched = false;
+    isAiming = false;
+    ball.x = paddle.x + paddle.width / 2;
+    ball.y = paddle.y - ball.radius - 1;
+  }
+
+  // Reseta o jogo inteiro
+  function resetGame() {
+    score = 0;
+    level = 1;
+    lives = 3;
+    scoreEl.textContent = score;
+    livesEl.textContent = lives;
+    levelEl.textContent = level;
+    createBricks();
+    resetBall();
+  }
+
+  // Eventos de input mouse
+
+  canvas.addEventListener("mousedown", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (launched) {
+      if (y > canvas.height / 2) {
+        mouseDrag = true;
+        lastMouseX = x;
+        e.preventDefault();
+      }
+    } else {
+      aimStart = { x: x, y: y };
+      aimEnd = { x: x, y: y };
+      isAiming = true;
+    }
+  });
+
+  canvas.addEventListener("mousemove", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+
+    if (mouseDrag && launched) {
+      let deltaX = x - lastMouseX;
+      paddle.x += deltaX;
+      lastMouseX = x;
+      e.preventDefault();
+    } else if (isAiming) {
+      aimEnd.x = e.clientX - rect.left;
+      aimEnd.y = e.clientY - rect.top;
+    }
+  });
+
+  canvas.addEventListener("mouseup", (e) => {
+    if (isAiming) {
+      const dx = aimStart.x - aimEnd.x;
+      const dy = aimStart.y - aimEnd.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      if (length > 10) {
+        const speed = 7;
+        ball.dx = (dx / length) * speed;
+        ball.dy = (dy / length) * speed;
+        launched = true;
       }
     }
+    isAiming = false;
+    mouseDrag = false;
+  });
 
-    // Eventos teclado
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = true;
-      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = true;
-    });
+  // Eventos de input touch
 
-    document.addEventListener("keyup", (e) => {
-      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = false;
-      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = false;
-    });
+  canvas.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
 
-    // Eventos touch
-    canvas.addEventListener("touchstart", (e) => {
-      if (e.touches.length == 1) {
-        const rect = canvas.getBoundingClientRect();
-        touchX = e.touches[0].clientX - rect.left;
+    if (launched) {
+      if (y > canvas.height / 2) {
+        touchDrag = true;
+        lastTouchX = x;
+        e.preventDefault();
       }
+    } else {
+      aimStart = { x: x, y: y };
+      aimEnd = { x: x, y: y };
+      isAiming = true;
+    }
+  });
+
+  canvas.addEventListener("touchmove", (e) => {
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+
+    if (touchDrag && launched) {
+      let deltaX = x - lastTouchX;
+      paddle.x += deltaX;
+      lastTouchX = x;
+      e.preventDefault();
+    } else if (isAiming) {
+      aimEnd.x = x;
+      aimEnd.y = e.touches[0].clientY - rect.top;
+    }
+  });
+
+  canvas.addEventListener("touchend", (e) => {
+    if (isAiming) {
+      const dx = aimStart.x - aimEnd.x;
+      const dy = aimStart.y - aimEnd.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      if (length > 10) {
+        const speed = 7;
+        ball.dx = (dx / length) * speed;
+        ball.dy = (dy / length) * speed;
+        launched = true;
+      }
+    }
+    isAiming = false;
+    touchDrag = false;
+  });
+
+  // Função para mostrar o menu e esconder o jogo
+  function showMenu() {
+    gameContainer.style.display = "none";
+    menu.style.display = "block";
+  }
+
+  // Função para iniciar o jogo
+  function startGame() {
+    menu.style.display = "none";
+    gameContainer.style.display = "flex";
+    resetGame();
+    draw();
+  }
+
+  // Botões do menu
+  startBtn.addEventListener("click", () => {
+    startGame();
+  });
+
+  backBtn.addEventListener("click", () => {
+    showMenu();
+  });
+
+  // Seleção de personagem
+  charBtn.addEventListener("click", () => {
+    characterModal.style.display = "block";
+    renderCharacterList();
+  });
+
+  closeModalBtn.addEventListener("click", () => {
+    characterModal.style.display = "none";
+  });
+
+  // Renderiza lista de personagens com desbloqueio
+  function renderCharacterList() {
+    characterList.innerHTML = "";
+    characters.forEach((char, index) => {
+      const unlocked = char.unlock();
+      const div = document.createElement("div");
+      div.classList.add("ball-option");
+      if (!unlocked) div.classList.add("locked");
+      div.innerHTML = `
+        <span>${char.name}</span>
+        <button ${!unlocked ? "disabled" : ""} data-index="${index}">
+          ${selectedBall === char.name ? "Selecionado" : "Selecionar"}
+        </button>
+      `;
+      characterList.appendChild(div);
     });
 
-    canvas.addEventListener("touchmove", (e) => {
-      if (e.touches.length == 1) {
-        const rect = canvas.getBoundingClientRect();
-        const moveX = e.touches[0].clientX - rect.left;
-        const dx = moveX - touchX;
-        paddleX += dx;
-        touchX = moveX;
-        if (paddleX < 0) paddleX = 0;
-        if (paddleX + paddleWidth > canvas.width) paddleX = canvas.width - paddleWidth;
-      }
+    characterList.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.dataset.index);
+        if (characters[idx].unlock()) {
+          selectedBall = characters[idx].name;
+          characterModal.style.display = "none";
+        }
+      });
     });
+  }
 
-    // Mouse (arrastar)
-    let isDragging = false;
-    canvas.addEventListener("mousedown", (e) => {
-      isDragging = true;
-    });
-    canvas.addEventListener("mouseup", () => {
-      isDragging = false;
-    });
-    canvas.addEventListener("mousemove", (e) => {
-      if (isDragging) {
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        paddleX = x - paddleWidth / 2;
-        if (paddleX < 0) paddleX = 0;
-        if (paddleX + paddleWidth > canvas.width) paddleX = canvas.width - paddleWidth;
-      }
-    });
-  </script>
+  // Inicializa os bricks e mostra menu
+  createBricks();
+  showMenu();
+</script>
 </body>
 </html>
