@@ -127,7 +127,7 @@
       display: block;
       background-color: #000;
       border-radius: 10px;
-      touch-action: none; /* importante para touch */
+      touch-action: none;
     }
     #backBtn {
       margin-top: 15px;
@@ -135,7 +135,6 @@
       padding: 6px 12px;
       font-size: 14px;
     }
-    /* Modal de seleção de personagem */
     #characterModal {
       display: none;
       position: fixed;
@@ -201,7 +200,6 @@
   </style>
 </head>
 <body>
-  <!-- MENU INICIAL -->
   <div id="menu">
     <h1>Menu Principal</h1>
     <button id="startBtn">Start</button>
@@ -209,7 +207,6 @@
     <button onclick="alert('Saindo do jogo...')">Exit</button>
   </div>
 
-  <!-- CONTAINER DO JOGO + SIDEBAR -->
   <div id="gameContainer">
     <div id="sidebar">
       <h1>Jogo da Bolinha Neon</h1>
@@ -241,7 +238,6 @@
     </div>
   </div>
 
-  <!-- MODAL DE SELEÇÃO DE PERSONAGEM -->
   <div id="characterModal">
     <h2>Escolha sua Bolinha</h2>
     <div id="characterList"></div>
@@ -249,7 +245,7 @@
   </div>
 
   <script>
-    // Elementos principais
+    // Elementos DOM
     const menu = document.getElementById("menu");
     const gameContainer = document.getElementById("gameContainer");
     const startBtn = document.getElementById("startBtn");
@@ -257,14 +253,12 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    // HUD
     const scoreEl = document.getElementById("score");
     const highScoreEl = document.getElementById("highScore");
     const livesEl = document.getElementById("lives");
     const levelEl = document.getElementById("level");
     const playerNameEl = document.getElementById("playerName");
 
-    // Modal de personagens
     const charBtn = document.getElementById("charBtn");
     const characterModal = document.getElementById("characterModal");
     const characterList = document.getElementById("characterList");
@@ -279,16 +273,15 @@
     let lives = 3;
     let level = 1;
 
-    // Posição e tamanho da raquete (paddle)
+    // Paddle
     let paddle = {
       x: canvas.width / 2 - 40,
       y: canvas.height - 20,
       width: 80,
-      height: 10,
-      dx: 0
+      height: 10
     };
 
-    // Bolinha
+    // Bola
     let ball = {
       x: canvas.width / 2,
       y: canvas.height - 30,
@@ -297,7 +290,7 @@
       dy: 0
     };
 
-    // Tabela de blocos (bricks)
+    // Configuração dos blocos (bricks)
     const brickRowCount = 5;
     const brickColumnCount = 8;
     const brickWidth = 50;
@@ -309,17 +302,12 @@
     let bricks = [];
     let hitCount = [];
 
-    // Controle do lançamento da bola
     let isAiming = false;
     let launched = false;
     let aimStart = null;
     let aimEnd = null;
 
-    // Variáveis para controle do drag da raquete
-    let isDraggingPaddle = false;
-    let lastDragX = 0;
-
-    // Personagens (bolinhas) e desbloqueios
+    // Personagens (bolinhas)
     const characters = [
       { name: "Bola Clássica", unlock: () => true },
       { name: "Bola de Cristal", unlock: () => level >= 3 },
@@ -329,7 +317,6 @@
     ];
     let selectedBall = "Bola Clássica";
 
-    // Funções de bricks
     function createBricks() {
       bricks = [];
       hitCount = [];
@@ -359,7 +346,6 @@
       }
     }
 
-    // Desenha a bola usando a bolinha selecionada
     function drawBall() {
       ctx.beginPath();
       ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
@@ -418,7 +404,7 @@
       }
     }
 
-    function draw() {
+function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBricks();
       drawBall();
@@ -433,8 +419,15 @@
         ball.x += ball.dx;
         ball.y += ball.dy;
 
-        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) ball.dx = -ball.dx;
-        if (ball.y - ball.radius < 0) ball.dy = -ball.dy;
+        // Colisão com as bordas esquerda e direita
+        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+          ball.dx = -ball.dx;
+        }
+
+        // Colisão com a borda superior
+        if (ball.y - ball.radius < 0) {
+          ball.dy = -ball.dy;
+        }
 
         // Limitar velocidade máxima para suavizar o movimento
         const maxSpeed = 5;
@@ -443,7 +436,7 @@
         if (ball.dy > maxSpeed) ball.dy = maxSpeed;
         if (ball.dy < -maxSpeed) ball.dy = -maxSpeed;
 
-        // Colisão com paddle
+        // Colisão com a raquete (paddle)
         if (
           ball.x > paddle.x &&
           ball.x < paddle.x + paddle.width &&
@@ -454,7 +447,7 @@
           ball.y = paddle.y - ball.radius;
         }
 
-        // Colisão com bricks
+        // Colisão com os blocos (bricks)
         for (let c = 0; c < brickColumnCount; c++) {
           for (let r = 0; r < brickRowCount; r++) {
             let b = bricks[c][r];
@@ -516,12 +509,12 @@
           }
         }
       } else {
-        // Bola presa na raquete
+        // Bola presa na raquete antes do lançamento
         ball.x = paddle.x + paddle.width / 2;
         ball.y = paddle.y - ball.radius - 1;
       }
 
-      // Limites da raquete
+      // Limitar movimento da raquete dentro do canvas
       if (paddle.x < 0) paddle.x = 0;
       if (paddle.x + paddle.width > canvas.width)
         paddle.x = canvas.width - paddle.width;
@@ -533,8 +526,8 @@
       launched = false;
       isAiming = false;
       ball.x = paddle.x + paddle.width / 2;
-      ball.y = paddle.y - ball.radius - 1
-function resetBall() {
+      ball.y = paddle.y - ball.radius - 1;
+    }
 
     function resetGame() {
       score = 0;
@@ -547,30 +540,24 @@ function resetBall() {
       resetBall();
     }
 
-    // Eventos de input mouse e touch
-
-    // Variáveis para controle do drag da raquete
+    // Controle do mouse para mover a raquete e lançar a bola
     let mouseDrag = false;
     let lastMouseX = 0;
 
-    let touchDrag = false;
-    let lastTouchX = 0;
-
-    // MOUSE
     canvas.addEventListener("mousedown", (e) => {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
       if (launched) {
-        // Bola lançada: inicia drag para mover raquete, só na metade inferior
+        // Mover paddle com mouse na parte inferior da tela
         if (y > canvas.height / 2) {
           mouseDrag = true;
           lastMouseX = x;
           e.preventDefault();
         }
       } else {
-        // Bola não lançada: inicia mira para lançar
+        // Começar mira para lançar bola
         aimStart = { x: x, y: y };
         aimEnd = { x: x, y: y };
         isAiming = true;
@@ -583,7 +570,6 @@ function resetBall() {
       const y = e.clientY - rect.top;
 
       if (mouseDrag && launched) {
-        // Mover a raquete com o mouse
         let deltaX = x - lastMouseX;
         paddle.x += deltaX;
         lastMouseX = x;
@@ -595,12 +581,11 @@ function resetBall() {
 
     canvas.addEventListener("mouseup", (e) => {
       if (isAiming) {
-        // Calcula vetor direção da mira e lança a bola
         const dx = aimStart.x - aimEnd.x;
         const dy = aimStart.y - aimEnd.y;
         const length = Math.sqrt(dx * dx + dy * dy);
         if (length > 10) {
-          const speed = 7;
+          const speed = 5; // Velocidade ajustada para movimento suave
           ball.dx = (dx / length) * speed;
           ball.dy = (dy / length) * speed;
           launched = true;
@@ -610,7 +595,10 @@ function resetBall() {
       mouseDrag = false;
     });
 
-    // TOUCH
+    // Controle touch para celular
+    let touchDrag = false;
+    let lastTouchX = 0;
+
     canvas.addEventListener("touchstart", (e) => {
       const touch = e.touches[0];
       const rect = canvas.getBoundingClientRect();
@@ -652,7 +640,7 @@ function resetBall() {
         const dy = aimStart.y - aimEnd.y;
         const length = Math.sqrt(dx * dx + dy * dy);
         if (length > 10) {
-          const speed = 7;
+          const speed = 5; // Velocidade ajustada para toque
           ball.dx = (dx / length) * speed;
           ball.dy = (dy / length) * speed;
           launched = true;
@@ -662,13 +650,11 @@ function resetBall() {
       touchDrag = false;
     });
 
-    // Função para mostrar o menu e esconder o jogo
     function showMenu() {
       gameContainer.style.display = "none";
       menu.style.display = "block";
     }
 
-    // Função para iniciar o jogo
     function startGame() {
       menu.style.display = "none";
       gameContainer.style.display = "flex";
@@ -676,16 +662,9 @@ function resetBall() {
       draw();
     }
 
-    // Botões do menu
-    startBtn.addEventListener("click", () => {
-      startGame();
-    });
+    startBtn.addEventListener("click", startGame);
+    backBtn.addEventListener("click", showMenu);
 
-    backBtn.addEventListener("click", () => {
-      showMenu();
-    });
-
-    // Seleção de personagem
     charBtn.addEventListener("click", () => {
       characterModal.style.display = "block";
       renderCharacterList();
@@ -722,7 +701,6 @@ function resetBall() {
       });
     }
 
-    // Inicializa os bricks e mostra menu
     createBricks();
     showMenu();
   </script>
