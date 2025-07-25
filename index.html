@@ -329,7 +329,10 @@
     ];
     let selectedBall = "Bola Clássica";
 
-    // Funções para criar e desenhar bricks
+    // ** NOVA VARIÁVEL PARA CONTROLAR O requestAnimationFrame **
+    let animationId = null;
+
+// Funções de bricks
     function createBricks() {
       bricks = [];
       hitCount = [];
@@ -418,298 +421,266 @@
       }
     }
 
-// Atualiza posição da bola e checa colisões
-    function updateBall() {
-      if (!launched) {
-        // Se não lançado, bola acompanha a raquete
-        ball.x = paddle.x + paddle.width / 2;
-        ball.y = paddle.y - ball.radius;
-        return;
-      }
+    function update() {
+      if (launched) {
+        ball.x += ball.dx;
+        ball.y += ball.dy;
 
-      ball.x += ball.dx;
-      ball.y += ball.dy;
+        // Colisão com paredes laterais
+        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) ball.dx = -ball.dx;
+        // Colisão com teto
+        if (ball.y - ball.radius < 0) ball.dy = -ball.dy;
 
-      // Colisão com paredes laterais
-      if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
-        ball.dx = -ball.dx;
-      }
-      // Colisão com topo
-      if (ball.y - ball.radius < 0) {
-        ball.dy = -ball.dy;
-      }
-      // Colisão com paddle
-      if (
-        ball.y + ball.radius > paddle.y &&
-        ball.x > paddle.x &&
-        ball.x < paddle.x + paddle.width
-      ) {
-        ball.dy = -Math.abs(ball.dy); // força a bola a subir
-        // Ajusta dx baseado na posição da bola na raquete para controle do ângulo
-        let collidePoint = ball.x - (paddle.x + paddle.width / 2);
-        collidePoint = collidePoint / (paddle.width / 2);
-        const maxAngle = Math.PI / 3; // 60 graus
-        const angle = collidePoint * maxAngle;
-        const speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
-        ball.dx = speed * Math.sin(angle);
-        ball.dy = -speed * Math.cos(angle);
-      }
-      // Bola caiu abaixo do paddle (perdeu vida)
-      if (ball.y - ball.radius > canvas.height) {
-        lives--;
-        updateHUD();
-        if (lives <= 0) {
-          alert("Game Over!");
-          resetGame();
-          return;
+        // Colisão com paddle
+        if (
+          ball.x > paddle.x &&
+          ball.x < paddle.x + paddle.width &&
+          ball.y + ball.radius > paddle.y &&
+          ball.y - ball.radius < paddle.y + paddle.height
+        ) {
+          ball.dy = -ball.dy;
+          ball.y = paddle.y - ball.radius;
         }
-        resetBall();
-      }
 
-      // Checar colisão com bricks
-      for (let c = 0; c < brickColumnCount; c++) {
-        for (let r = 0; r < brickRowCount; r++) {
-          let b = bricks[c][r];
-          if (b.status > 0) {
-            if (
-              ball.x > b.x &&
-              ball.x < b.x + brickWidth &&
-              ball.y > b.y &&
-              ball.y < b.y + brickHeight
-            ) {
-              ball.dy = -ball.dy;
-              hitCount[c][r]++;
-              if (hitCount[c][r] >= 2) {
-                b.status = 0;
-                score += 100;
-                updateHUD();
-                // Checar se venceu a fase
-                if (isLevelCleared()) {
+        // Colisão com bricks
+        for (let c = 0; c < brickColumnCount; c++) {
+          for (let r = 0; r < brickRowCount; r++) {
+            let b = bricks[c][r];
+            if (b.status > 0) {
+              if (
+                ball.x > b.x &&
+                ball.x < b.x + brickWidth &&
+                ball.y > b.y &&
+                ball.y < b.y + brickHeight
+              ) {
+                ball.dy = -ball.dy;
+                hitCount[c][r]++;
+                score += 5;
+                scoreEl.textContent = score;
+
+                if (hitCount[c][r] >= 3) {
+                  b.status = 0;
+                  score += 15;
+                }
+
+                if (score > highScore) {
+                  highScore = score;
+                  highScoreEl.textContent = highScore;
+                }
+
+                // Verifica blocos destruídos para avançar fase
+                let destroyed = 0;
+                for (let i = 0; i < brickColumnCount; i++) {
+                  for (let j = 0; j < brickRowCount; j++) {
+                    if (bricks[i][j].status === 0) destroyed++;
+                  }
+                }
+
+                if (destroyed >= brickRowCount * brickColumnCount * 0.8 || score >= level * 500) {
                   level++;
-                  alert("Parabéns! Passou para a fase " + level);
-                  nextLevel();
+                  levelEl.textContent = level;
+                  createBricks();
+                  resetBall();
                 }
               }
             }
           }
         }
-      }
-    }
 
-    function updateHUD() {
-      scoreEl.textContent = score;
-      livesEl.textContent = lives;
-      levelEl.textContent = level;
-      if (score > highScore) {
-        highScore = score;
-        highScoreEl.textContent = highScore;
-      }
-    }
-
-    // Reinicia a bola para posição inicial e velocidade padrão, sem acumular velocidade
-    function resetBall() {
-      launched = false;
-      ball.x = paddle.x + paddle.width / 2;
-      ball.y = paddle.y - ball.radius;
-      // Velocidade inicial zerada até lançamento
-      ball.dx = 0;
-      ball.dy = 0;
-      aimStart = null;
-      aimEnd = null;
-      isAiming = false;
-    }
-
-    // Reinicia o jogo inteiro
-    function resetGame() {
-      lives = 3;
-      score = 0;
-      level = 1;
-      createBricks();
-      resetBall();
-      updateHUD();
-    }
-
-    // Próxima fase: aumenta dificuldade
-    function nextLevel() {
-      createBricks();
-      resetBall();
-      updateHUD();
-    }
-
-    // Checa se todos os bricks foram destruídos
-    function isLevelCleared() {
-      for (let c = 0; c < brickColumnCount; c++) {
-        for (let r = 0; r < brickRowCount; r++) {
-          if (bricks[c][r].status > 0) {
-            return false;
+        // Bola caiu no chão
+        if (ball.y - ball.radius > canvas.height) {
+          lives--;
+          livesEl.textContent = lives;
+          if (lives <= 0) {
+            alert("Fim de Jogo!");
+            cancelAnimationFrame(animationId); // Cancela animação para evitar acúmulo
+            resetGame();
+            showMenu();
+            return;
+          } else {
+            resetBall();
           }
         }
+      } else {
+        // Bola presa na raquete esperando lançamento
+        ball.x = paddle.x + paddle.width / 2;
+        ball.y = paddle.y - ball.radius - 1;
       }
-      return true;
+
+      // Limita movimento da raquete
+      if (paddle.x < 0) paddle.x = 0;
+      if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
     }
 
-    // Desenha tudo a cada frame
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBricks();
-      drawPaddle();
       drawBall();
+      drawPaddle();
       drawAimArrow();
+      update();
+
+      // Controla o frame para não acumular animações:
+      animationId = requestAnimationFrame(draw);
     }
 
-    // Loop principal do jogo
-    function gameLoop() {
-      updateBall();
-      draw();
-      requestAnimationFrame(gameLoop);
+    function resetBall() {
+      ball.dx = 0;
+      ball.dy = 0;
+      launched = false;
+      isAiming = false;
+      ball.x = paddle.x + paddle.width / 2;
+      ball.y = paddle.y - ball.radius - 1;
     }
 
-    // Eventos mouse para paddle e lançamento da bola com seta
+    function resetGame() {
+      score = 0;
+      level = 1;
+      lives = 3;
+      scoreEl.textContent = score;
+      livesEl.textContent = lives;
+      levelEl.textContent = level;
+      createBricks();
+      resetBall();
+    }
+
+    // Eventos de input mouse e touch para mover paddle e lançar bola
+
+    let mouseDrag = false;
+    let lastMouseX = 0;
+
+    let touchDrag = false;
+    let lastTouchX = 0;
+
+    // MOUSE
     canvas.addEventListener("mousedown", (e) => {
       const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
 
-      // Se clicar na paddle, iniciar drag
-      if (
-        mouseY > paddle.y &&
-        mouseY < paddle.y + paddle.height &&
-        mouseX > paddle.x &&
-        mouseX < paddle.x + paddle.width
-      ) {
-        isDraggingPaddle = true;
-        lastDragX = mouseX;
-      } else if (!launched) {
-        // Se clicar fora da paddle e não lançado, inicia mira
+      if (launched) {
+        if (y > canvas.height / 2) {
+          mouseDrag = true;
+          lastMouseX = x;
+          e.preventDefault();
+        }
+      } else {
+        aimStart = { x: x, y: y };
+        aimEnd = { x: x, y: y };
         isAiming = true;
-        aimStart = { x: ball.x, y: ball.y };
-        aimEnd = { x: mouseX, y: mouseY };
       }
     });
 
     canvas.addEventListener("mousemove", (e) => {
       const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
 
-      if (isDraggingPaddle) {
-        let deltaX = mouseX - lastDragX;
+      if (mouseDrag && launched) {
+        let deltaX = x - lastMouseX;
         paddle.x += deltaX;
-        if (paddle.x < 0) paddle.x = 0;
-        if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
-        lastDragX = mouseX;
-        if (!launched) {
-          ball.x = paddle.x + paddle.width / 2;
-          ball.y = paddle.y - ball.radius;
-        }
+        lastMouseX = x;
+        e.preventDefault();
       } else if (isAiming) {
-        aimEnd = { x: mouseX, y: mouseY };
+        aimEnd = { x: x, y: y };
       }
     });
 
     canvas.addEventListener("mouseup", (e) => {
-      if (isDraggingPaddle) {
-        isDraggingPaddle = false;
-      }
-      if (isAiming && !launched) {
-        // Calcula direção e velocidade da bola no lançamento
-        let dx = aimStart.x - aimEnd.x;
-        let dy = aimStart.y - aimEnd.y;
-        let magnitude = Math.sqrt(dx * dx + dy * dy);
-        if (magnitude > 0) {
-          let speed = 5; // velocidade constante ao lançar
-          ball.dx = (dx / magnitude) * speed;
-          ball.dy = (dy / magnitude) * speed;
+      if (isAiming) {
+        const dx = aimStart.x - aimEnd.x;
+        const dy = aimStart.y - aimEnd.y;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        if (length > 10) {
+          const speed = 7;
+          ball.dx = (dx / length) * speed;
+          ball.dy = (dy / length) * speed;
           launched = true;
         }
-        isAiming = false;
-        aimStart = null;
-        aimEnd = null;
       }
+      isAiming = false;
+      mouseDrag = false;
     });
 
-    // Controle por toque (touch) para dispositivos móveis
+    // TOUCH
     canvas.addEventListener("touchstart", (e) => {
-      e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
       const touch = e.touches[0];
-      const touchX = touch.clientX - rect.left;
-      const touchY = touch.clientY - rect.top;
+      const rect = canvas.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
 
-      // Se tocar na paddle, iniciar drag
-      if (
-        touchY > paddle.y &&
-        touchY < paddle.y + paddle.height &&
-        touchX > paddle.x &&
-        touchX < paddle.x + paddle.width
-      ) {
-        isDraggingPaddle = true;
-        lastDragX = touchX;
-      } else if (!launched) {
-        // Se tocar fora da paddle e não lançado, iniciar mira
+      if (launched) {
+        if (y > canvas.height / 2) {
+          touchDrag = true;
+          lastTouchX = x;
+          e.preventDefault();
+        }
+      } else {
+        aimStart = { x: x, y: y };
+        aimEnd = { x: x, y: y };
         isAiming = true;
-        aimStart = { x: ball.x, y: ball.y };
-        aimEnd = { x: touchX, y: touchY };
       }
     });
 
     canvas.addEventListener("touchmove", (e) => {
-      e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
       const touch = e.touches[0];
-      const touchX = touch.clientX - rect.left;
-      const touchY = touch.clientY - rect.top;
+      const rect = canvas.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
 
-      if (isDraggingPaddle) {
-        let deltaX = touchX - lastDragX;
+      if (touchDrag && launched) {
+        let deltaX = x - lastTouchX;
         paddle.x += deltaX;
-        if (paddle.x < 0) paddle.x = 0;
-        if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
-        lastDragX = touchX;
-        if (!launched) {
-          ball.x = paddle.x + paddle.width / 2;
-          ball.y = paddle.y - ball.radius;
-        }
+        lastTouchX = x;
+        e.preventDefault();
       } else if (isAiming) {
-        aimEnd = { x: touchX, y: touchY };
+        aimEnd = { x: x, y: y };
       }
     });
 
     canvas.addEventListener("touchend", (e) => {
-      e.preventDefault();
-      if (isDraggingPaddle) {
-        isDraggingPaddle = false;
-      }
-      if (isAiming && !launched) {
-        let dx = aimStart.x - aimEnd.x;
-        let dy = aimStart.y - aimEnd.y;
-        let magnitude = Math.sqrt(dx * dx + dy * dy);
-        if (magnitude > 0) {
-          let speed = 5;
-          ball.dx = (dx / magnitude) * speed;
-          ball.dy = (dy / magnitude) * speed;
+      if (isAiming) {
+        const dx = aimStart.x - aimEnd.x;
+        const dy = aimStart.y - aimEnd.y;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        if (length > 10) {
+          const speed = 7;
+          ball.dx = (dx / length) * speed;
+          ball.dy = (dy / length) * speed;
           launched = true;
         }
-        isAiming = false;
-        aimStart = null;
-        aimEnd = null;
       }
+      isAiming = false;
+      touchDrag = false;
     });
 
-    // Botões menu e voltar
-    startBtn.addEventListener("click", () => {
+    // Função para mostrar o menu e esconder o jogo
+    function showMenu() {
+      gameContainer.style.display = "none";
+      menu.style.display = "block";
+      cancelAnimationFrame(animationId); // Para a animação ao voltar ao menu
+    }
+
+    // Função para iniciar o jogo
+    function startGame() {
       menu.style.display = "none";
       gameContainer.style.display = "flex";
       resetGame();
-      gameLoop();
+      if (!animationId) {
+        draw();
+      }
+    }
+
+    // Botões do menu
+    startBtn.addEventListener("click", () => {
+      startGame();
     });
 
     backBtn.addEventListener("click", () => {
-      gameContainer.style.display = "none";
-      menu.style.display = "block";
+      showMenu();
     });
 
-    // Modal de personagem
+    // Seleção de personagem
     charBtn.addEventListener("click", () => {
       characterModal.style.display = "block";
       renderCharacterList();
@@ -719,36 +690,36 @@
       characterModal.style.display = "none";
     });
 
-    // Renderiza lista de personagens com desbloqueio
     function renderCharacterList() {
       characterList.innerHTML = "";
-      characters.forEach((char) => {
+      characters.forEach((char, index) => {
         const unlocked = char.unlock();
         const div = document.createElement("div");
-        div.className = "ball-option" + (unlocked ? "" : " locked");
+        div.classList.add("ball-option");
+        if (!unlocked) div.classList.add("locked");
         div.innerHTML = `
           <span>${char.name}</span>
-          <button ${!unlocked ? "disabled" : ""} data-name="${char.name}">
-            ${char.name === selectedBall ? "Selecionado" : "Selecionar"}
+          <button ${!unlocked ? "disabled" : ""} data-index="${index}">
+            ${selectedBall === char.name ? "Selecionado" : "Selecionar"}
           </button>
         `;
         characterList.appendChild(div);
       });
 
-      // Adiciona evento aos botões
       characterList.querySelectorAll("button").forEach((btn) => {
         btn.addEventListener("click", () => {
-          selectedBall = btn.getAttribute("data-name");
-          characterModal.style.display = "none";
+          const idx = parseInt(btn.dataset.index);
+          if (characters[idx].unlock()) {
+            selectedBall = characters[idx].name;
+            characterModal.style.display = "none";
+          }
         });
       });
     }
 
-    // Inicializa o jogo
+    // Inicializa os bricks e mostra menu
     createBricks();
-    updateHUD();
-    resetBall();
-
+    showMenu();
   </script>
 </body>
 </html>
