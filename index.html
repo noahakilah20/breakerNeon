@@ -292,14 +292,17 @@
     const INITIAL_BALL_DX = 2;
     const INITIAL_BALL_DY = -2;
 
-    let ball = {
-      x: canvas.width / 2,
-      y: canvas.height - 30,
-      dx: INITIAL_BALL_DX,
-      dy: INITIAL_BALL_DY,
-      radius: 10,
-      speed: 2
-    };
+    const INITIAL_BALL_DX = 2;
+const INITIAL_BALL_DY = -2;
+
+let ball = {
+  x: canvas.width / 2,
+  y: canvas.height - 30,
+  dx: INITIAL_BALL_DX,
+  dy: INITIAL_BALL_DY,
+  radius: 10,
+  speed: 1 // ou 2, você escolhe a dificuldade
+};
 
     // Controle de estado da bola
     let launched = false;
@@ -367,12 +370,14 @@
     }
 
     // Reseta a bola para posição inicial e velocidade padrão
-    function resetBall() {
-      ball.x = canvas.width / 2;
-      ball.y = canvas.height - 30;
-      ball.dx = INITIAL_BALL_DX;
-      ball.dy = INITIAL_BALL_DY;
-    }
+function resetBall() {
+  ball.x = canvas.width / 2;
+  ball.y = canvas.height - 30;
+  ball.dx = INITIAL_BALL_DX;
+  ball.dy = INITIAL_BALL_DY;
+  ball.speed = 1; // ou 2, escolha a velocidade desejada
+}
+
 
     // Reseta o jogo (pontuação, vidas, fase, bricks, bola)
     function resetGame() {
@@ -406,8 +411,10 @@
     // Atualiza lógica do jogo
     function update() {
       if (launched) {
-        ball.x += ball.dx;
-        ball.y += ball.dy;
+  ball.x += ball.dx * ball.speed;
+  ball.y += ball.dy * ball.speed;
+}
+
 
         // Colisão com paredes laterais
         if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
